@@ -6,6 +6,7 @@ export interface IUser {
     password: string;
     age: number;
     is_active?: boolean;
+    role?: string; //admin, agent, user
     created_at?: Date;
     updated_at?: Date;
 }
