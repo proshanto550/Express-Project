@@ -3,6 +3,7 @@ import config from "../config/env";
 import jwt, { type JwtPayload } from "jsonwebtoken";
 import { pool } from "../db";
 import type { ROLES } from "../types";
+import sendResponse from "../utility/sendResponse";
 
 const auth = (...roles: ROLES[]) => {
     
@@ -14,7 +15,8 @@ const auth = (...roles: ROLES[]) => {
             const token = req.headers.authorization;
 
             if (!token) {
-                return res.status(401).json({
+                return sendResponse(res, {
+                    statusCode: 401,
                     success: false,
                     "message": "Unauthorized Access!",
                 });
@@ -34,25 +36,28 @@ const auth = (...roles: ROLES[]) => {
             const user = userData.rows[0];
 
             if (userData.rows.length === 0) {
-                res.status(404).json({
+                return sendResponse(res, {
+                    statusCode: 404,
                     success: false,
                     "message": "User Not Found!",
-                })
+                });
             }
 
             if (!user?.is_active) {
-                res.status(403).json({
+                return sendResponse(res, {
+                    statusCode: 403,
                     success: false,
                     "message": "Forbidden!",
-                })
+                });
             }
 
             // console.log("User Role:", user.role);
             if (roles.length && !roles.includes(user.role)) {
-                res.status(403).json({
+                return sendResponse(res, {
+                    statusCode: 403,
                     success: false,
                     "message": "Forbidden! User is not authorized to Access.",
-                })
+                });
             }
 
             req.user = decoded;
