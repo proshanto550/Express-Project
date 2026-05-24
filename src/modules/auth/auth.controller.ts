@@ -3,11 +3,11 @@ import { authService } from "./auth.service";
 import sendResponse from "../../utility/sendResponse";
 
 
-const registerUser = async ( req: Request, res: Response ) => {
+const registerUser = async (req: Request, res: Response) => {
     try {
         const result = await authService.registerUserIntoDB(req.body);
         sendResponse(res, {
-            statusCode: 200,
+            statusCode: 201,
             success: true,
             message: "User registered successfully",
             data: result,
@@ -22,11 +22,11 @@ const registerUser = async ( req: Request, res: Response ) => {
     }
 };
 
-const loginUser = async ( req: Request, res: Response ) => {
+const loginUser = async (req: Request, res: Response) => {
     try {
         const result = await authService.loginUserIntoDB(req.body);
 
-        const { refreshToken } = result;
+        const { refreshToken, token, user } = result;
 
         res.cookie("refreshToken", refreshToken, {
             httpOnly: true,
@@ -37,8 +37,11 @@ const loginUser = async ( req: Request, res: Response ) => {
         sendResponse(res, {
             statusCode: 200,
             success: true,
-            message: "User logged in successfully",
-            data: result,
+            message: "Login successful",
+            data: {
+                token,
+                user,
+            },
         });
     } catch (error: any) {
         sendResponse(res, {
@@ -50,7 +53,7 @@ const loginUser = async ( req: Request, res: Response ) => {
     }
 }
 
-const refreshToken = async ( req: Request, res: Response ) => {
+const refreshToken = async (req: Request, res: Response) => {
     try {
         const result = await authService.generateRefreshToken(req.cookies.refreshToken);
 

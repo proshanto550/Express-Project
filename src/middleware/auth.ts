@@ -29,14 +29,11 @@ const auth = (...roles: ROLES[]) => {
                 token as string,
                 config.JWT_SECRET_KEY as string
             ) as JwtPayload;
-            // console.log(decoded);
-            const userData = await pool.query(
-                `SELECT * FROM users WHERE email = $1
-            `, [decoded.email]
-            );
 
-            // console.log(userData.rows[0]);
-            const user = userData.rows[0];
+            const userData = await pool.query(
+                `SELECT * FROM users WHERE email = $1`,
+                [decoded.email]
+            );
 
             if (userData.rows.length === 0) {
                 return sendResponse(res, {
@@ -46,8 +43,19 @@ const auth = (...roles: ROLES[]) => {
                 });
             }
 
-            // console.log("User Role:", user.role);
-            if (roles.length && !roles.includes(user.role)) {
+            const user = userData.rows[0];
+            const normalizedRole = user.role?.trim().toLowerCase();
+            const validRoles: string[] = ["contributor", "maintainer"];
+
+            if (!validRoles.includes(normalizedRole as string)) {
+                return sendResponse(res, {
+                    statusCode: 403,
+                    success: false,
+                    "message": "Forbidden! User role is not valid.",
+                });
+            }
+
+            if (roles.length && !roles.includes(normalizedRole as any)) {
                 return sendResponse(res, {
                     statusCode: 403,
                     success: false,
@@ -55,11 +63,19 @@ const auth = (...roles: ROLES[]) => {
                 });
             }
 
-            req.user = decoded;
+            req.user = {
+                ...decoded,
+                role: normalizedRole,
+            } as JwtPayload;
 
             next();
-        } catch (err) {
-            next(err);
+        } catch (err: any) {
+            return sendResponse(res, {
+                statusCode: 401,
+                success: false,
+                message: "Invalid or expired token",
+                error: err.message,
+            });
         }
     };
 };

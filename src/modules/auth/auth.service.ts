@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt, { type JwtPayload } from "jsonwebtoken";
 import config from "../../config/env";
 
+const validRoles = ["contributor", "maintainer"];
 
 const registerUserIntoDB = async (payload: {
     name: string;
@@ -11,7 +12,13 @@ const registerUserIntoDB = async (payload: {
     role?: string;
 }) => {
     const { name, email, password, role } = payload;
-    // First check if the user already exists
+
+    const validRoles = ["contributor", "maintainer"];
+    const normalizedRole = role?.trim().toLowerCase() || "contributor";
+    if (!validRoles.includes(normalizedRole)) {
+        throw new Error("Role must be either 'contributor' or 'maintainer'");
+    }
+
     const userData = await pool.query(`
     SELECT * FROM users WHERE email = $1
     `, [email]);
@@ -20,15 +27,15 @@ const registerUserIntoDB = async (payload: {
         throw new Error("User already exists");
     }
 
-    // Hash the password
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Insert the user into the database
     const result = await pool.query(`
         INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4) RETURNING *
-    `, [name, email, hashedPassword, role]);
+    `, [name, email, hashedPassword, normalizedRole]);
 
-    return result.rows[0];
+    const user = result.rows[0];
+    delete user.password;
+    return user;
 };
 
 const loginUserIntoDB = async (payload: {
@@ -48,21 +55,23 @@ const loginUserIntoDB = async (payload: {
         throw new Error("Invalid Credentials");
     }
 
-    const user = userData.rows[0];
-    // console.log(user);
-    const matchPassword = await bcrypt.compare(password, user.password);
-    // console.log(matchPassword);
+    const userRecord = userData.rows[0];
+    // console.log(userRecord);
+    const matchPassword = await bcrypt.compare(password, userRecord.password);
     if (!matchPassword) {
         throw new Error("Invalid Credentials");
     }
 
-    // Token generation will be here
+    const normalizedRole = userRecord.role?.trim().toLowerCase();
+    if (!validRoles.includes(normalizedRole)) {
+        throw new Error("Invalid user role");
+    }
 
     const jwtPayload = {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
+        id: userRecord.id,
+        name: userRecord.name,
+        email: userRecord.email,
+        role: normalizedRole,
     };
 
     const accessToken = jwt.sign(jwtPayload, config.JWT_SECRET_KEY as string, {
@@ -73,7 +82,16 @@ const loginUserIntoDB = async (payload: {
         expiresIn: "10d",
     });
 
-    return { accessToken, refreshToken };
+    const user = {
+        id: userRecord.id,
+        name: userRecord.name,
+        email: userRecord.email,
+        role: normalizedRole,
+        created_at: userRecord.created_at,
+        updated_at: userRecord.updated_at,
+    };
+
+    return { token: accessToken, refreshToken, user };
 };
 
 const generateRefreshToken = async (token: string) => {
@@ -98,10 +116,15 @@ const generateRefreshToken = async (token: string) => {
         throw new Error("User Not Found!");
     }
 
+    const normalizedRole = user.role?.trim().toLowerCase();
+    if (!validRoles.includes(normalizedRole)) {
+        throw new Error("Invalid user role");
+    }
+
     const jwtPayload = {
         id: user.id,
         name: user.name,
-        role: user.role,
+        role: normalizedRole,
         email: user.email,
     };
 
