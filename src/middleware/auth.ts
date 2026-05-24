@@ -1,8 +1,8 @@
 import type { Request, Response, NextFunction } from "express";
 import config from "../config/env";
 import jwt, { type JwtPayload } from "jsonwebtoken";
-import { pool } from "../db";
-import type { ROLES } from "../types";
+import { pool } from "../utility/db.init";
+import type { ROLES } from "../utility/roleType";
 import sendResponse from "../utility/sendResponse";
 
 const auth = (...roles: ROLES[]) => {

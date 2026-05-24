@@ -1,7 +1,7 @@
-import { pool } from "../../db";
+import { pool } from "../../utility/db.init";
+import type { IssuePayload, IssueQuery, IssueRecord, IssueWithReporter, IssueUpdatePayload, IssueReporter } from "./issue.interface";
 
-
-const createIssueIntoDB = async (payload: any) => {
+const createIssueIntoDB = async (payload: IssuePayload) => {
     const { title, description, type, reporter_id } = payload;
 
     if (!title || typeof title !== "string" || title.trim().length === 0) {
@@ -39,7 +39,7 @@ const createIssueIntoDB = async (payload: any) => {
 };
 
 
-const getAllIssuesFromDB = async (query: { sort?: string; type?: string; status?: string } = {}) => {
+const getAllIssuesFromDB = async (query: IssueQuery = {}) => {
     const conditions: string[] = [];
     const values: any[] = [];
 
@@ -59,35 +59,35 @@ const getAllIssuesFromDB = async (query: { sort?: string; type?: string; status?
     sql += query.sort === "oldest" ? ` ORDER BY created_at ASC` : ` ORDER BY created_at DESC`;
 
     const result = await pool.query(sql, values);
-    const issues = result.rows;
+    const issues = result.rows as IssueRecord[];
 
     if (!issues.length) {
         return [];
     }
 
-    const reporterIds = [...new Set(issues.map((issue: any) => issue.reporter_id))];
+    const reporterIds = [...new Set(issues.map((issue) => issue.reporter_id))];
     const reporters = await pool.query(
         `SELECT id, name, role FROM users WHERE id = ANY($1)`,
         [reporterIds],
     );
 
-    const reporterMap = new Map(reporters.rows.map((user: any) => [user.id, user]));
+    const reporterMap = new Map(reporters.rows.map((user: IssueReporter) => [user.id, user]));
 
-    return issues.map((issue: any) => ({
+    return issues.map((issue) => ({
         ...issue,
         reporter: reporterMap.get(issue.reporter_id) ?? null,
     }));
 };
 
 
-const getSingleIssueFromDB = async (id: string) => {
+const getSingleIssueFromDB = async (id: string): Promise<IssueWithReporter | null> => {
     const result = await pool.query(`SELECT * FROM issues WHERE id = $1`, [id]);
 
     if (result.rowCount === 0) {
         return null;
     }
 
-    const issue = result.rows[0];
+    const issue = result.rows[0] as IssueRecord;
     const reporterQuery = await pool.query(`SELECT id, name, role FROM users WHERE id = $1`, [issue.reporter_id]);
 
     return {
@@ -97,14 +97,14 @@ const getSingleIssueFromDB = async (id: string) => {
 };
 
 
-const updateIssueFromDB = async (id: string, payload: any, user: any) => {
+const updateIssueFromDB = async (id: string, payload: IssueUpdatePayload, user: { id?: number; role?: string }) => {
     const issueResult = await pool.query(`SELECT * FROM issues WHERE id = $1`, [id]);
 
     if (issueResult.rowCount === 0) {
         throw new Error("Issue not found");
     }
 
-    const issue = issueResult.rows[0];
+    const issue = issueResult.rows[0] as IssueRecord;
     const userId = Number(user?.id);
     const userRole = user?.role;
 
@@ -176,7 +176,7 @@ const updateIssueFromDB = async (id: string, payload: any, user: any) => {
 
 
 
-const deleteIssueFromDB = async (id: string, user: any) => {
+const deleteIssueFromDB = async (id: string, user: { role?: string }) => {
     if (user?.role !== "maintainer") {
         throw new Error("Forbidden: only maintainers can delete issues");
     }
