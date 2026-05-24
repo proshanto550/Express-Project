@@ -89,7 +89,7 @@ const getSingleUser = async (req: Request, res: Response) => {
 
 const updateUser = async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { name, email, password, age, is_active } = req.body;
+    const { name, email, password, age } = req.body;
     // console.log("Id : ", id);
     // console.log("Body : ", req.body);
 

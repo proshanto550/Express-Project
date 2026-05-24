@@ -61,9 +61,8 @@ const loginUserIntoDB = async (payload: {
     const jwtPayload = {
         id: user.id,
         name: user.name,
-        role: user.role,
         email: user.email,
-        is_active: user.is_active,
+        role: user.role,
     };
 
     const accessToken = jwt.sign(jwtPayload, config.JWT_SECRET_KEY as string, {
@@ -99,16 +98,11 @@ const generateRefreshToken = async (token: string) => {
         throw new Error("User Not Found!");
     }
 
-    if (!user?.is_active) {
-        throw new Error("Forbidden!");
-    }
-
     const jwtPayload = {
         id: user.id,
         name: user.name,
         role: user.role,
         email: user.email,
-        is_active: user.is_active,
     };
 
     const accessToken = jwt.sign(jwtPayload, config.JWT_SECRET_KEY as string, {

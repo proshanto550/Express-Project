@@ -32,7 +32,6 @@ const loginUser = async ( req: Request, res: Response ) => {
             httpOnly: true,
             secure: false, // In production => true
             sameSite: "lax",
-            // maxAge: 24 * 60 * 60 * 1000, // 1 day
         });
 
         sendResponse(res, {

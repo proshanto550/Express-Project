@@ -6,13 +6,16 @@ import type { ROLES } from "../types";
 import sendResponse from "../utility/sendResponse";
 
 const auth = (...roles: ROLES[]) => {
-    
+
     return async (req: Request, res: Response, next: NextFunction) => {
         // console.log(roles);
         try {
             // console.log("This is Protected Route");
             // console.log(req.headers.authorization);
-            const token = req.headers.authorization;
+            let token = req.headers.authorization;
+            if (typeof token === "string" && token.startsWith("Bearer ")) {
+                token = token.slice(7).trim();
+            }
 
             if (!token) {
                 return sendResponse(res, {
@@ -40,14 +43,6 @@ const auth = (...roles: ROLES[]) => {
                     statusCode: 404,
                     success: false,
                     "message": "User Not Found!",
-                });
-            }
-
-            if (!user?.is_active) {
-                return sendResponse(res, {
-                    statusCode: 403,
-                    success: false,
-                    "message": "Forbidden!",
                 });
             }
 

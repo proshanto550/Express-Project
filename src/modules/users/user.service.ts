@@ -4,14 +4,14 @@ import bcrypt from "bcryptjs";
 
 
 const createUserIntoDB = async (payload: IUser) => {
-    const { name, email, password, age, role } = payload;
+    const { name, email, password, role } = payload;
 
     const hashPassword = await bcrypt.hash(password, 10);
 
     const result = await pool.query(`
-    INSERT INTO users(name, email, password, age, role) 
-    VALUES($1, $2, $3, $4, COALESCE($5, 'user'))
-    RETURNING *`, [name, email, hashPassword, age, role]);
+    INSERT INTO users(name, email, password, role) 
+    VALUES($1, $2, $3, COALESCE($4, 'user'))
+    RETURNING *`, [name, email, hashPassword, role]);
 
     delete result.rows[0].password;
 
@@ -36,7 +36,7 @@ const getSingleUserFromDB = async (id: string) => {
 
 
 const updateUserFromDB = async (id: string, payload: IUser) => {
-    const { name, email, password, age, is_active } = payload;
+    const { name, email, password } = payload;
 
     const hashPassword = await bcrypt.hash(password, 10);
 
@@ -44,12 +44,10 @@ const updateUserFromDB = async (id: string, payload: IUser) => {
         `UPDATE users SET 
         name = COALESCE($1, name), 
         email = COALESCE($2, email), 
-        password = COALESCE($3, password), 
-        age = COALESCE($4, age), 
-        is_active = COALESCE($5, is_active) 
+        password = COALESCE($3, password)
 
         WHERE id = $6 RETURNING *`,
-        [name, email, hashPassword, age, is_active, id],
+        [name, email, hashPassword, id],
     );
     delete result.rows[0].password;
     return result;

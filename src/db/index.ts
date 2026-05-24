@@ -13,8 +13,6 @@ export const initDB = async () => {
         name VARCHAR(30),
         email VARCHAR(30) UNIQUE NOT NULL,
         password TEXT NOT NULL,
-        is_active BOOLEAN DEFAULT TRUE,
-        age INT,
         role VARCHAR(20) DEFAULT 'user',
 
         created_at TIMESTAMP DEFAULT NOW(),
@@ -22,15 +20,15 @@ export const initDB = async () => {
         )`);
 
         await pool.query(`
-            CREATE TABLE IF NOT EXISTS profiles(
+            CREATE TABLE IF NOT EXISTS issues(
                 id SERIAL PRIMARY KEY,
-                user_id INT UNIQUE REFERENCES users(id) ON DELETE CASCADE,
                 
-                bio TEXT,
-                address TEXT,
-                phone VARCHAR(15),
-                gender VARCHAR(10),
-
+                title VARCHAR(150) NOT NULL,
+                description TEXT NOT NULL,
+                type VARCHAR(20) NOT NULL,
+                status VARCHAR(20) DEFAULT 'open',
+                reporter_id INT UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+                
                 created_at TIMESTAMP DEFAULT NOW(),
                 updated_at TIMESTAMP DEFAULT NOW()
             )
