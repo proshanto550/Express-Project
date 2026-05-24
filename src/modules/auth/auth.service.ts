@@ -3,6 +3,34 @@ import bcrypt from "bcryptjs";
 import jwt, { type JwtPayload } from "jsonwebtoken";
 import config from "../../config/env";
 
+
+const registerUserIntoDB = async (payload: {
+    name: string;
+    email: string;
+    password: string;
+    role?: string;
+}) => {
+    const { name, email, password, role } = payload;
+    // First check if the user already exists
+    const userData = await pool.query(`
+    SELECT * FROM users WHERE email = $1
+    `, [email]);
+
+    if (userData.rows.length > 0) {
+        throw new Error("User already exists");
+    }
+
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    // Insert the user into the database
+    const result = await pool.query(`
+        INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4) RETURNING *
+    `, [name, email, hashedPassword, role]);
+
+    return result.rows[0];
+};
+
 const loginUserIntoDB = async (payload: {
     email: string;
     password: string
@@ -16,7 +44,7 @@ const loginUserIntoDB = async (payload: {
     SELECT * FROM users WHERE email = $1
     `, [email]);
 
-    if (userData.rowCount === 0) {
+    if (userData.rows.length === 0) {
         throw new Error("Invalid Credentials");
     }
 
@@ -94,4 +122,5 @@ const generateRefreshToken = async (token: string) => {
 export const authService = {
     loginUserIntoDB,
     generateRefreshToken,
+    registerUserIntoDB,
 };

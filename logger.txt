@@ -127,3 +127,21 @@ Method -> GET | URL -> /api/users | Time -> 1779628108284
 Method -> POST | URL -> /api/users | Time -> 1779629097158
 
 Method -> POST | URL -> /api/users | Time -> 1779629115185
+
+Method -> GET | URL -> /api/users | Time -> 1779629999049
+
+Method -> GET | URL -> /api/users | Time -> 1779630000443
+
+Method -> GET | URL -> /api/users/1 | Time -> 1779630022500
+
+Method -> GET | URL -> /api/users/2 | Time -> 1779630032428
+
+Method -> GET | URL -> /api/users/5 | Time -> 1779630043722
+
+Method -> POST | URL -> /api/auth/register | Time -> 1779630860722
+
+Method -> POST | URL -> /api/auth/register | Time -> 1779630887925
+
+Method -> POST | URL -> /api/auth/register | Time -> 1779630941091
+
+Method -> POST | URL -> /api/auth/register | Time -> 1779631032268

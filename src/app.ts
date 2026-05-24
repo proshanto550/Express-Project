@@ -1,5 +1,5 @@
 import express, { type Application, type Request, type Response } from "express";
-import { userRoute } from "./modules/user/user.route";
+import { userRoute } from "./modules/users/user.route";
 import { profileRoute } from "./modules/profile/profile.route";
 import { authRoute } from "./modules/auth/auth.route";
 import logger from "./middleware/logger";
@@ -22,8 +22,8 @@ app.use(cors({
 app.get("/", (req: Request, res: Response) => {
     // res.send("Hello World!");
     res.status(200).json({
-        "message": "Hello World!",
-        "author": "Proshanto",
+        "message": "This is Express Project!",
+        "author": "Proshanto Kumar Das",
     });
 });
 
